@@ -388,23 +388,108 @@ def main():
         with col2:
             st.plotly_chart(fig_gender, use_container_width=True)
         
-        # Income vs Spending correlation
+        # Income vs Spending correlation with clustering
         st.subheader("Income vs Spending Correlation Analysis")
-        correlation = df['Annual Income (k$)'].corr(df['Spending Score (1-100)'])
+        correlation = df_clustered['Annual Income (k$)'].corr(df_clustered['Spending Score (1-100)'])
         
+        # Create a more detailed scatter plot with cluster information
         fig_scatter = px.scatter(
-            df, 
+            df_clustered, 
             x='Annual Income (k$)', 
             y='Spending Score (1-100)',
-            color='Genre',
+            color='Cluster',
             size='Age',
-            title=f'Income vs Spending Score (Correlation: {correlation:.3f})',
-            hover_data=['Age']
+            title=f'Income vs Spending Score by Customer Segment (Correlation: {correlation:.3f})',
+            hover_data=['Age', 'Genre', 'Cluster'],
+            color_continuous_scale='viridis'
         )
         fig_scatter.update_layout(template='plotly_white', height=500)
+        fig_scatter.update_traces(marker=dict(line=dict(width=1, color='white')))
         st.plotly_chart(fig_scatter, use_container_width=True)
         
-        st.info(f"Correlation coefficient: {correlation:.3f} - This indicates a {'weak' if abs(correlation) < 0.3 else 'moderate' if abs(correlation) < 0.7 else 'strong'} correlation between income and spending.")
+        # Correlation strength interpretation
+        strength = 'weak' if abs(correlation) < 0.3 else 'moderate' if abs(correlation) < 0.7 else 'strong'
+        st.info(f"Correlation coefficient: {correlation:.3f} - This indicates a {strength} correlation between income and spending patterns.")
+        
+        # Geographic Distribution Simulation
+        st.subheader("Geographic Distribution Analysis")
+        st.info("Note: Geographic data is simulated for demonstration as the original dataset doesn't include location information.")
+        
+        # Create simulated geographic data based on clusters
+        np.random.seed(42)
+        locations = {
+            'City': ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 
+                    'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose'],
+            'State': ['NY', 'CA', 'IL', 'TX', 'AZ', 'PA', 'TX', 'CA', 'TX', 'CA']
+        }
+        
+        # Assign locations based on cluster characteristics
+        location_data = []
+        for _, row in df_clustered.iterrows():
+            # Higher income clusters more likely in expensive cities
+            if row['Annual Income (k$)'] > 70:
+                city_weights = [0.25, 0.2, 0.15, 0.1, 0.05, 0.05, 0.05, 0.1, 0.05, 0.1]
+            elif row['Annual Income (k$)'] > 40:
+                city_weights = [0.15, 0.15, 0.15, 0.15, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+            else:
+                city_weights = [0.1, 0.1, 0.1, 0.2, 0.15, 0.1, 0.15, 0.05, 0.15, 0.05]
+            
+            # Normalize weights to ensure they sum to 1
+            city_weights = np.array(city_weights)
+            city_weights = city_weights / city_weights.sum()
+            
+            city_idx = np.random.choice(len(locations['City']), p=city_weights)
+            location_data.append({
+                'City': locations['City'][city_idx],
+                'State': locations['State'][city_idx],
+                'Cluster': row['Cluster'],
+                'Income': row['Annual Income (k$)'],
+                'Spending': row['Spending Score (1-100)']
+            })
+        
+        geo_df = pd.DataFrame(location_data)
+        
+        # Create geographic distribution chart
+        city_cluster_dist = geo_df.groupby(['City', 'Cluster']).size().reset_index(name='Count')
+        
+        fig_geo = px.bar(
+            city_cluster_dist,
+            x='City',
+            y='Count',
+            color='Cluster',
+            title='Customer Segment Distribution by City',
+            color_continuous_scale='viridis'
+        )
+        fig_geo.update_layout(
+            template='plotly_white',
+            height=400,
+            xaxis_tickangle=-45
+        )
+        st.plotly_chart(fig_geo, use_container_width=True)
+        
+        # Summary statistics by location
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            city_summary = geo_df.groupby('City').agg({
+                'Income': 'mean',
+                'Spending': 'mean',
+                'Cluster': 'count'
+            }).round(1).rename(columns={'Cluster': 'Customer Count'})
+            
+            st.write("**Average Metrics by City:**")
+            st.dataframe(city_summary, use_container_width=True)
+        
+        with col2:
+            cluster_by_state = geo_df.groupby(['State', 'Cluster']).size().reset_index(name='Count')
+            fig_state = px.pie(
+                cluster_by_state,
+                values='Count',
+                names='State',
+                title='Customer Distribution by State'
+            )
+            fig_state.update_layout(height=300)
+            st.plotly_chart(fig_state, use_container_width=True)
     
     with tab5:
         st.header("Business Insights & Recommendations")
@@ -419,41 +504,53 @@ def main():
         
         st.markdown("### Key Findings")
         
-        # Generate insights based on cluster analysis
+        # Create cluster summary table
+        cluster_summary = []
+        for cluster_id, analysis in cluster_analysis.items():
+            cluster_summary.append({
+                'Cluster': f"Cluster {cluster_id}",
+                'Description': analysis['description'],
+                'Count': analysis['count'],
+                'Avg Income ($k)': f"{analysis['avg_income']:.1f}",
+                'Avg Spending Score': f"{analysis['avg_spending']:.1f}",
+                'Avg Age': f"{analysis['avg_age']:.1f}",
+                'Primary Gender': max(analysis['gender_distribution'], key=analysis['gender_distribution'].get) if analysis['gender_distribution'] else 'N/A'
+            })
+        
+        cluster_df = pd.DataFrame(cluster_summary)
+        st.dataframe(cluster_df, use_container_width=True, hide_index=True)
+        
+        # Customer Segmentation Results in insight box
         st.markdown("""
         <div class="insight-box">
         <h4>Customer Segmentation Results:</h4>
+        <p>The K-means clustering analysis reveals distinct customer segments with varying spending behaviors:</p>
+        <ul>
+        <li><strong>Premium Segment:</strong> High-income customers with strong spending power represent the most valuable segment</li>
+        <li><strong>Conservative Segment:</strong> High earners with low spending indicate untapped potential for targeted marketing</li>
+        <li><strong>Impulse Buyers:</strong> Lower income but high spending customers show strong engagement despite budget constraints</li>
+        <li><strong>Budget Conscious:</strong> Low income, low spending customers require value-focused approaches</li>
+        <li><strong>Balanced Customers:</strong> Moderate income and spending patterns represent the stable customer base</li>
+        </ul>
+        </div>
         """, unsafe_allow_html=True)
-        
-        for cluster_id, analysis in cluster_analysis.items():
-            st.markdown(f"""
-            <strong>Cluster {cluster_id}</strong> ({analysis['count']} customers):<br>
-            • {analysis['description']}<br>
-            • Average Income: ${analysis['avg_income']:.1f}k<br>
-            • Average Spending Score: {analysis['avg_spending']:.1f}<br>
-            • Average Age: {analysis['avg_age']:.1f} years<br><br>
-            """, unsafe_allow_html=True)
-        
-        st.markdown("</div>", unsafe_allow_html=True)
         
         st.markdown("### Marketing Recommendations")
         
         st.markdown("""
         <div class="insight-box">
         <h4>Marketing Recommendations:</h4>
+        <p>Targeted strategies for each customer segment to maximize engagement and revenue:</p>
+        <ul>
+        <li><strong>Premium Customers:</strong> Launch exclusive membership programs, premium product lines, and VIP experiences to maintain loyalty</li>
+        <li><strong>High Earners/Low Spenders:</strong> Implement personalized email campaigns, limited-time offers, and lifestyle-based marketing to convert potential</li>
+        <li><strong>Budget Shoppers:</strong> Create loyalty reward programs, bulk purchase discounts, and seasonal sales to increase purchase frequency</li>
+        <li><strong>Price-Sensitive Customers:</strong> Focus on essential items, competitive pricing, and value bundles to build long-term relationships</li>
+        <li><strong>Moderate Customers:</strong> Develop balanced marketing mix with regular promotions and product recommendations based on purchase history</li>
+        </ul>
+        <p><strong>Key Strategy:</strong> Implement dynamic pricing and personalized recommendations based on customer segment classification to optimize revenue across all groups.</p>
         </div>
         """, unsafe_allow_html=True)
-        
-        recommendations = [
-            "High-Value Customers (High Income, High Spending): Focus on premium products and exclusive offers",
-            "Potential Customers (High Income, Low Spending): Target with personalized promotions to increase engagement", 
-            "Budget Customers (Low Income, High Spending): Offer value deals and loyalty programs",
-            "Careful Spenders (Low Income, Low Spending): Focus on essential products with competitive pricing",
-            "Average Customers: Standard marketing approach with seasonal campaigns"
-        ]
-        
-        for i, rec in enumerate(recommendations, 1):
-            st.markdown(f"**{i}.** {rec}")
         
         st.markdown("### Model Performance")
         
