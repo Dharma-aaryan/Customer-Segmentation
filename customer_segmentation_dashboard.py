@@ -14,33 +14,66 @@ warnings.filterwarnings('ignore')
 # Page configuration
 st.set_page_config(
     page_title="Customer Segmentation Dashboard",
-    page_icon="🛍️",
+    page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # Custom CSS for better styling
 st.markdown("""
 <style>
-    .metric-card {
-        background-color: #f0f2f6;
-        border: 1px solid #e6e9f0;
+    .main-header {
+        background: linear-gradient(90deg, #1f77b4 0%, #ff7f0e 100%);
+        color: white;
+        padding: 2rem;
         border-radius: 10px;
-        padding: 1rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    .metric-card {
+        background-color: #ffffff;
+        border: 2px solid #e1e8ed;
+        border-radius: 15px;
+        padding: 1.5rem;
         margin: 0.5rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .segment-title {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
         font-weight: bold;
-        color: #1f77b4;
+        color: #2c3e50;
         margin-bottom: 0.5rem;
     }
     .insight-box {
-        background-color: #e8f4fd;
-        border-left: 4px solid #1f77b4;
-        padding: 1rem;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-left: 4px solid #007bff;
+        padding: 1.5rem;
         margin: 1rem 0;
-        border-radius: 5px;
+        border-radius: 8px;
+        color: #212529;
+    }
+    .insight-box h4 {
+        color: #007bff;
+        margin-bottom: 1rem;
+    }
+    .control-section {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .stExpander > div > div > div {
+        background-color: #ffffff;
+    }
+    .cluster-description {
+        background-color: #e3f2fd;
+        border: 1px solid #2196f3;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        color: #0d47a1;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -182,24 +215,23 @@ def create_demographic_charts(df_clustered):
     return fig_age, fig_gender
 
 def main():
-    st.title("🛍️ Customer Segmentation Dashboard")
-    st.markdown("### Interactive Analysis of Mall Customer Data using K-Means Clustering")
+    st.markdown("""
+    <div class="main-header">
+        <h1>Customer Segmentation Dashboard</h1>
+        <p>Interactive Analysis of Mall Customer Data using K-Means Clustering</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Load data
     df = load_data()
     
-    # Sidebar controls
-    st.sidebar.header("Analysis Controls")
-    n_clusters = st.sidebar.slider("Number of Clusters", min_value=2, max_value=8, value=5)
-    show_elbow = st.sidebar.checkbox("Show Elbow Method Analysis", value=True)
-    
     # Main dashboard tabs
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "📊 Dataset Overview", 
-        "📈 Elbow Method", 
-        "🎯 Customer Segments", 
-        "👥 Demographic Analysis", 
-        "💡 Business Insights"
+        "Dataset Overview", 
+        "Elbow Method", 
+        "Customer Segments", 
+        "Demographic Analysis", 
+        "Business Insights"
     ])
     
     with tab1:
@@ -288,6 +320,15 @@ def main():
     with tab3:
         st.header("Customer Segments")
         
+        # Controls for this tab
+        st.markdown('<div class="control-section">', unsafe_allow_html=True)
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.markdown("**Clustering Controls**")
+        with col2:
+            n_clusters = st.slider("Number of Clusters", min_value=2, max_value=8, value=5, key="cluster_slider")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
         # Perform clustering
         df_clustered, kmeans, X = perform_clustering(df, n_clusters)
         
@@ -303,6 +344,12 @@ def main():
         # Display cluster information in cards
         for cluster_id, analysis in cluster_analysis.items():
             with st.expander(f"Cluster {cluster_id}: {analysis['description']}", expanded=True):
+                st.markdown(f"""
+                <div class="cluster-description">
+                    <strong>Cluster {cluster_id} Profile:</strong> {analysis['description']}
+                </div>
+                """, unsafe_allow_html=True)
+                
                 col1, col2, col3, col4 = st.columns(4)
                 
                 with col1:
@@ -317,13 +364,20 @@ def main():
                 # Gender distribution
                 gender_data = analysis['gender_distribution']
                 if len(gender_data) > 0:
-                    st.write("**Gender Distribution:**")
+                    st.markdown("**Gender Distribution:**")
                     for gender, count in gender_data.items():
                         percentage = (count / analysis['count']) * 100
-                        st.write(f"- {gender}: {count} customers ({percentage:.1f}%)")
+                        st.write(f"• {gender}: {count} customers ({percentage:.1f}%)")
     
     with tab4:
         st.header("Demographic Analysis")
+        
+        # Use the same clustering settings from tab3
+        n_clusters = 5  # Default value
+        if 'cluster_slider' in st.session_state:
+            n_clusters = st.session_state.cluster_slider
+        
+        df_clustered, kmeans, X = perform_clustering(df, n_clusters)
         
         # Create demographic charts
         fig_age, fig_gender = create_demographic_charts(df_clustered)
@@ -355,6 +409,12 @@ def main():
     with tab5:
         st.header("Business Insights & Recommendations")
         
+        # Use the same clustering settings from tab3
+        n_clusters = 5  # Default value
+        if 'cluster_slider' in st.session_state:
+            n_clusters = st.session_state.cluster_slider
+        
+        df_clustered, kmeans, X = perform_clustering(df, n_clusters)
         cluster_analysis = analyze_clusters(df_clustered)
         
         st.markdown("### Key Findings")
@@ -367,27 +427,33 @@ def main():
         
         for cluster_id, analysis in cluster_analysis.items():
             st.markdown(f"""
-            **Cluster {cluster_id}** ({analysis['count']} customers):
-            - {analysis['description']}
-            - Average Income: ${analysis['avg_income']:.1f}k
-            - Average Spending Score: {analysis['avg_spending']:.1f}
-            - Average Age: {analysis['avg_age']:.1f} years
-            """)
+            <strong>Cluster {cluster_id}</strong> ({analysis['count']} customers):<br>
+            • {analysis['description']}<br>
+            • Average Income: ${analysis['avg_income']:.1f}k<br>
+            • Average Spending Score: {analysis['avg_spending']:.1f}<br>
+            • Average Age: {analysis['avg_age']:.1f} years<br><br>
+            """, unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)
         
         st.markdown("### Marketing Recommendations")
         
+        st.markdown("""
+        <div class="insight-box">
+        <h4>Marketing Recommendations:</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        
         recommendations = [
-            "**High-Value Customers (High Income, High Spending)**: Focus on premium products and exclusive offers",
-            "**Potential Customers (High Income, Low Spending)**: Target with personalized promotions to increase engagement",
-            "**Budget Customers (Low Income, High Spending)**: Offer value deals and loyalty programs",
-            "**Careful Spenders (Low Income, Low Spending)**: Focus on essential products with competitive pricing",
-            "**Average Customers**: Standard marketing approach with seasonal campaigns"
+            "High-Value Customers (High Income, High Spending): Focus on premium products and exclusive offers",
+            "Potential Customers (High Income, Low Spending): Target with personalized promotions to increase engagement", 
+            "Budget Customers (Low Income, High Spending): Offer value deals and loyalty programs",
+            "Careful Spenders (Low Income, Low Spending): Focus on essential products with competitive pricing",
+            "Average Customers: Standard marketing approach with seasonal campaigns"
         ]
         
-        for rec in recommendations:
-            st.markdown(f"• {rec}")
+        for i, rec in enumerate(recommendations, 1):
+            st.markdown(f"**{i}.** {rec}")
         
         st.markdown("### Model Performance")
         
