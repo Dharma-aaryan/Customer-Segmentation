@@ -33,9 +33,6 @@ task = "shell.exec"
 args = "streamlit run app.py --server.port 5000"
 waitForPort = 5000
 
-[workflows.workflow.metadata]
-outputType = "webview"
-
 [[workflows.workflow]]
 name = "install_dependencies"
 author = "agent"
@@ -47,3 +44,6 @@ args = "uv add plotly scikit-learn matplotlib seaborn openpyxl joblib"
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[agent]
+integrations = ["web_scraper==1.0.0"]
