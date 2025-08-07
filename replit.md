@@ -1,8 +1,16 @@
-# ML Project Dashboard
+# Customer Segmentation Dashboard
 
 ## Overview
 
-This is a comprehensive Machine Learning Dashboard built with Streamlit that provides an interactive interface for ML project analysis, visualization, and predictions. The application serves as a centralized platform for data scientists and ML practitioners to upload datasets, analyze model performance, make predictions, and examine Jupyter notebooks. The dashboard supports multiple file formats and provides detailed insights through interactive visualizations and metrics.
+This is a specialized Customer Segmentation Dashboard built with Streamlit that recreates and enhances the analysis from the original Customer Segmentation notebook. The dashboard provides an interactive interface for exploring mall customer data, performing K-means clustering analysis, and generating business insights. Based on the GitHub repository: https://github.com/Dharma-aaryan/Customer-Segmentation
+
+Key features:
+- Interactive K-means clustering with configurable cluster count
+- Elbow method analysis for optimal cluster determination  
+- Comprehensive customer segment analysis with business descriptions
+- Demographic analysis by gender, age, and spending patterns
+- Business insights and marketing recommendations
+- Professional styling with custom CSS and interactive Plotly visualizations
 
 ## User Preferences
 
@@ -11,20 +19,21 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Frontend Architecture
-- **Framework**: Streamlit-based web application with a multi-page navigation structure
-- **Layout**: Wide layout with expandable sidebar for navigation between different functional sections
-- **State Management**: Streamlit session state for persisting datasets, models, and notebooks across page navigation
-- **UI Components**: Modular page structure with five main sections: File Upload, Data Exploration, Model Performance, Predictions, and Notebook Analysis
+- **Framework**: Streamlit-based web application with tabbed navigation structure
+- **Layout**: Wide layout with sidebar controls for interactive analysis parameters
+- **State Management**: Streamlit caching for efficient data loading and processing
+- **UI Components**: Five main tabs - Dataset Overview, Elbow Method, Customer Segments, Demographic Analysis, Business Insights
+- **Styling**: Custom CSS for professional appearance with metric cards, insight boxes, and branded color scheme
 
 ### Backend Architecture
-- **Modular Design**: Utils-based architecture with separate classes for distinct functionalities
-- **Core Components**:
-  - `DataExplorer`: Handles dataset analysis and visualization
-  - `ModelAnalyzer`: Provides ML model performance analysis and metrics
-  - `Predictor`: Manages prediction workflows for trained models
-  - `NotebookAnalyzer`: Processes and analyzes Jupyter notebook content
-  - `FileHandler`: Centralizes file upload and loading operations
-- **Data Processing**: Pandas-based data manipulation with NumPy for numerical operations
+- **Core Functions**: Single-file architecture with specialized functions for customer segmentation analysis
+- **Key Components**:
+  - `load_data()`: Loads and caches the Mall Customer CSV dataset
+  - `perform_clustering()`: Executes K-means clustering on Income and Spending Score features
+  - `calculate_elbow_method()`: Determines optimal cluster count using Within-Cluster Sum of Squares
+  - `analyze_clusters()`: Generates business insights and customer segment descriptions
+  - `create_visualizations()`: Builds interactive Plotly charts for cluster analysis
+- **Data Processing**: Pandas for data manipulation, scikit-learn for K-means clustering, NumPy for numerical operations
 
 ### Visualization Framework
 - **Primary Library**: Plotly for interactive charts and graphs
