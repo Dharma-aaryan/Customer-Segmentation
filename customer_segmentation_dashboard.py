@@ -82,6 +82,8 @@ st.markdown("""
 def load_data():
     """Load and preprocess the customer data"""
     df = pd.read_csv('data/MallCustomers.csv')
+    # Rename Genre column to Gender for better clarity
+    df = df.rename(columns={'Genre': 'Gender'})
     return df
 
 @st.cache_data
@@ -168,7 +170,7 @@ def analyze_clusters(df_clustered):
             'avg_income': cluster_data['Annual Income (k$)'].mean(),
             'avg_spending': cluster_data['Spending Score (1-100)'].mean(),
             'avg_age': cluster_data['Age'].mean(),
-            'gender_distribution': cluster_data['Genre'].value_counts().to_dict(),
+            'gender_distribution': cluster_data['Gender'].value_counts().to_dict(),
             'description': ''
         }
         
@@ -201,12 +203,12 @@ def create_demographic_charts(df_clustered):
     fig_age.update_layout(template='plotly_white', height=400)
     
     # Gender distribution by cluster
-    gender_cluster = df_clustered.groupby(['Cluster', 'Genre']).size().reset_index(name='Count')
+    gender_cluster = df_clustered.groupby(['Cluster', 'Gender']).size().reset_index(name='Count')
     fig_gender = px.bar(
         gender_cluster,
         x='Cluster',
         y='Count',
-        color='Genre',
+        color='Gender',
         title='Gender Distribution by Customer Segment',
         barmode='group'
     )
@@ -277,7 +279,7 @@ def main():
         col1, col2 = st.columns(2)
         
         with col1:
-            gender_counts = df['Genre'].value_counts()
+            gender_counts = df['Gender'].value_counts()
             fig_gender = px.pie(
                 values=gender_counts.values, 
                 names=gender_counts.index,
@@ -287,7 +289,7 @@ def main():
         
         with col2:
             fig_age_dist = px.histogram(
-                df, x='Age', color='Genre',
+                df, x='Age', color='Gender',
                 title='Age Distribution by Gender',
                 nbins=15
             )
@@ -332,6 +334,19 @@ def main():
         # Perform clustering
         df_clustered, kmeans, X = perform_clustering(df, n_clusters)
         
+        # Methodology explanation
+        st.markdown("""
+        <div class="insight-box">
+        <h4>Customer Segmentation Methodology</h4>
+        <p>This analysis uses <strong>K-Means clustering</strong> to segment customers based on two key behavioral indicators:</p>
+        <ul>
+        <li><strong>Annual Income (k$):</strong> Customer's purchasing power and economic capacity</li>
+        <li><strong>Spending Score (1-100):</strong> Customer's propensity to spend in the mall environment</li>
+        </ul>
+        <p>The clustering algorithm groups customers with similar income and spending patterns, revealing distinct market segments for targeted marketing strategies.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
         # Main cluster visualization
         fig_clusters = create_cluster_visualization(df_clustered)
         st.plotly_chart(fig_clusters, use_container_width=True)
@@ -340,6 +355,18 @@ def main():
         cluster_analysis = analyze_clusters(df_clustered)
         
         st.subheader("Cluster Characteristics")
+        st.markdown("""
+        <div class="insight-box">
+        <h4>Understanding the Metrics</h4>
+        <ul>
+        <li><strong>Customer Count:</strong> Total number of customers in each segment</li>
+        <li><strong>Average Income:</strong> Mean annual income of customers in the cluster (in thousands)</li>
+        <li><strong>Average Spending Score:</strong> Mean propensity to spend (scale 1-100, higher = more likely to spend)</li>
+        <li><strong>Average Age:</strong> Mean age of customers in the segment</li>
+        <li><strong>Gender Distribution:</strong> Breakdown of male/female customers per cluster</li>
+        </ul>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Display cluster information in cards
         for cluster_id, analysis in cluster_analysis.items():
@@ -400,7 +427,7 @@ def main():
             color='Cluster',
             size='Age',
             title=f'Income vs Spending Score by Customer Segment (Correlation: {correlation:.3f})',
-            hover_data=['Age', 'Genre', 'Cluster'],
+            hover_data=['Age', 'Gender', 'Cluster'],
             color_continuous_scale='viridis'
         )
         fig_scatter.update_layout(template='plotly_white', height=500)
