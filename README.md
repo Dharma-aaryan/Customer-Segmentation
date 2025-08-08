@@ -21,8 +21,11 @@ The dashboard will open in your browser at `http://localhost:8501`
 ├── customer_segmentation_dashboard.py  # Main dashboard application
 ├── data/
 │   └── MallCustomers.csv              # Customer dataset
+├── app.py                             # Redirect file (not used)
 └── README.md                          # This file
 ```
+
+**Note:** Only `customer_segmentation_dashboard.py` is needed to run the application. The `app.py` file is not used for this project.
 
 ## Features
 - **Dataset Overview**: Explore customer demographics and distributions

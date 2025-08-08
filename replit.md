@@ -4,6 +4,13 @@
 
 This is a specialized Customer Segmentation Dashboard built with Streamlit that recreates and enhances the analysis from the original Customer Segmentation notebook. The dashboard provides an interactive interface for exploring mall customer data, performing K-means clustering analysis, and generating business insights. Based on the GitHub repository: https://github.com/Dharma-aaryan/Customer-Segmentation
 
+**Recent Changes (Aug 8, 2025):**
+- Cleaned up codebase by removing unnecessary imports and unused CSS
+- Fixed LSP errors by updating KMeans parameters to use 'auto' for n_init
+- Simplified app.py to contain only a redirect message (main dashboard is customer_segmentation_dashboard.py)
+- Created minimal requirements list: streamlit, pandas, numpy, plotly, scikit-learn
+- Added README.md with clear local installation instructions
+
 Key features:
 - Interactive K-means clustering with configurable cluster count
 - Elbow method analysis for optimal cluster determination  
