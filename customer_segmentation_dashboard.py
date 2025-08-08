@@ -1,13 +1,9 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -57,13 +53,7 @@ st.markdown("""
         color: #007bff;
         margin-bottom: 1rem;
     }
-    .control-section {
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 10px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
+
     .stExpander > div > div > div {
         background-color: #ffffff;
     }
@@ -93,7 +83,7 @@ def perform_clustering(df, n_clusters=5):
     X = df[['Annual Income (k$)', 'Spending Score (1-100)']].values
     
     # Perform K-means clustering
-    kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init='auto')
     cluster_labels = kmeans.fit_predict(X)
     
     # Add cluster labels to dataframe
@@ -109,7 +99,7 @@ def calculate_elbow_method(X, max_clusters=10):
     K_range = range(1, max_clusters + 1)
     
     for k in K_range:
-        kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+        kmeans = KMeans(n_clusters=k, random_state=42, n_init='auto')
         kmeans.fit(X)
         wcss.append(kmeans.inertia_)
     
