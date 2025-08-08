@@ -323,13 +323,11 @@ def main():
         st.header("Customer Segments")
         
         # Controls for this tab
-        st.markdown('<div class="control-section">', unsafe_allow_html=True)
         col1, col2 = st.columns([3, 1])
         with col1:
             st.markdown("**Clustering Controls**")
         with col2:
             n_clusters = st.slider("Number of Clusters", min_value=2, max_value=8, value=5, key="cluster_slider")
-        st.markdown('</div>', unsafe_allow_html=True)
         
         # Perform clustering
         df_clustered, kmeans, X = perform_clustering(df, n_clusters)
